@@ -55,10 +55,10 @@ function DescribeVisual() {
     <div>
       <Label right={<Chip tone="electric">New request</Chip>}>Describe</Label>
       <div className="rounded-xl border border-white/[0.08] bg-black/30 p-5 text-[15px] leading-relaxed text-snow">
-        <TypedText text="Build a student management system with role-based access, course enrolment, and grade tracking." />
+        <TypedText text="Build a real-time collaborative editor with live cursors, offline recovery, and conflict-free sync." />
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        {["Next.js", "PostgreSQL", "GitHub repo connected"].map((t) => (
+        {["Next.js", "WebSockets", "Yjs CRDT"].map((t) => (
           <span key={t} className="rounded-full border border-white/[0.08] bg-white/[0.02] px-2.5 py-1 font-mono text-[10.5px] text-fog">
             {t}
           </span>
@@ -74,13 +74,13 @@ function DescribeVisual() {
   );
 }
 
-const REQUIREMENTS = ["Students can enrol in published courses", "Teachers record and publish grades", "Admins manage users and roles"];
+const REQUIREMENTS = ["Editors see live cursor and presence updates", "Offline edits merge without conflicts on reconnect", "Document versions persist for audit and recovery"];
 const TASKS = [
-  ["Design data model & roles", "Architect"],
-  ["Auth with role-based access", "Coding"],
-  ["Course enrolment API", "Coding"],
-  ["Grade tracking module", "Coding"],
-  ["Integration test suite", "Testing"],
+  ["Design CRDT sync protocol", "Architect"],
+  ["WebSocket presence gateway", "Coding"],
+  ["Offline queue & reconnect", "Coding"],
+  ["Versioned document persistence", "Coding"],
+  ["Concurrency test suite", "Testing"],
 ];
 
 function PlanVisual() {
@@ -148,8 +148,8 @@ function ArchitectVisual() {
           </motion.g>
           <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
             <rect x="160" y="36" width="120" height="48" rx="8" className="fill-electric/10 stroke-electric/50" />
-            <text x="220" y="57" textAnchor="middle" className={text}>REST API</text>
-            <text x="220" y="72" textAnchor="middle" className="fill-[#7db4ff] text-[9px]">/courses · /grades · /auth</text>
+            <text x="220" y="57" textAnchor="middle" className={text}>Sync Gateway</text>
+            <text x="220" y="72" textAnchor="middle" className="fill-[#7db4ff] text-[9px]">/sync · /presence · /recover</text>
           </motion.g>
           <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }}>
             <rect x="320" y="36" width="100" height="48" rx="8" className={box} />
@@ -158,13 +158,13 @@ function ArchitectVisual() {
           </motion.g>
           <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}>
             <rect x="160" y="116" width="120" height="48" rx="8" className={box} />
-            <text x="220" y="137" textAnchor="middle" className={text}>Auth Service</text>
-            <text x="220" y="152" textAnchor="middle" className={sub}>JWT sessions · roles</text>
+            <text x="220" y="137" textAnchor="middle" className={text}>CRDT Engine</text>
+            <text x="220" y="152" textAnchor="middle" className={sub}>Yjs updates · merge-safe</text>
           </motion.g>
         </svg>
       </div>
       <ul className="mt-3 grid gap-2 sm:grid-cols-3">
-        {["Roles enforced at DB layer", "Stateless JWT sessions", "REST for v1, typed client"].map((d, i) => (
+        {["Conflict-free merges", "Reconnect-safe updates", "Audit-ready versions"].map((d, i) => (
           <Row key={d} delay={1.5 + i * 0.12} className="rounded-lg border border-white/[0.06] px-3 py-2 text-[11.5px] text-fog">
             {d}
           </Row>
@@ -181,8 +181,8 @@ function BuildVisual() {
       <Label right={<Chip tone="electric">Coding Agent</Chip>}>Build</Label>
       <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-black/40">
         <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 py-2 font-mono text-[10.5px] text-fog-2">
-          <span className="text-fog">src/routes/auth.ts</span>
-          <span className="ml-auto text-success">+41</span>
+          <span className="text-fog">src/ws/documents.ts</span>
+          <span className="ml-auto text-success">+49</span>
           <span className="text-danger">−6</span>
         </div>
         <div className="p-3 font-mono text-[11px] leading-[1.75]">
@@ -206,7 +206,7 @@ function BuildVisual() {
       <Row delay={1.2} className="mt-3 flex items-center justify-between text-[12px] text-fog">
         <span>3 files changed</span>
         <span className="font-mono text-[11px]">
-          <span className="text-success">+166</span> <span className="text-danger">−6</span>
+          <span className="text-success">+207</span> <span className="text-danger">−14</span>
         </span>
       </Row>
     </div>
@@ -214,12 +214,12 @@ function BuildVisual() {
 }
 
 const TEST_CASES = [
-  "redirects to Google with signed state",
-  "exchanges authorization code for profile",
-  "links Google account to existing user",
-  "rejects mismatched state parameter",
-  "sets httpOnly, secure session cookie",
-  "refreshes expired tokens transparently",
+  "merges concurrent edits deterministically",
+  "replays offline updates after reconnect",
+  "broadcasts cursor and presence changes",
+  "rejects updates from another tenant",
+  "persists document versions for recovery",
+  "retries dropped WebSocket messages",
 ];
 
 function TestVisual() {
@@ -242,7 +242,7 @@ function TestVisual() {
           <motion.div className="h-full bg-success" initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 1.6, ease: "linear", delay: 0.2 }} />
         </div>
         <Row delay={1.8} className="mt-3 flex items-center justify-between font-mono text-[11px]">
-          <span className="text-success">12 passed</span>
+          <span className="text-success">24 passed</span>
           <span className="text-fog-2">0 failed · 1.8s</span>
         </Row>
       </div>
@@ -259,10 +259,10 @@ function ReviewVisual() {
           <div className="flex items-center gap-2">
             <StatusDot tone="ember" pulse />
             <span className="text-[13px] font-medium text-snow">Reviewer Agent</span>
-            <span className="ml-auto font-mono text-[10px] text-fog-2">src/routes/auth.ts:42</span>
+            <span className="ml-auto font-mono text-[10px] text-fog-2">src/ws/documents.ts:42</span>
           </div>
           <p className="mt-2 text-[13px] leading-relaxed text-fog">
-            Consider extracting token refresh into <code className="rounded bg-white/[0.06] px-1 py-0.5 font-mono text-[11px] text-snow">refreshSession()</code> — the same logic appears in two handlers.
+            Consider extracting reconnect backoff into <code className="rounded bg-white/[0.06] px-1 py-0.5 font-mono text-[11px] text-snow">reconnectWithJitter()</code> — the same logic appears in two event handlers.
           </p>
           <span className="mt-3 inline-block rounded-full border border-ember/30 bg-ember/10 px-2 py-0.5 font-mono text-[10px] text-ember-soft">Suggestion · non-blocking</span>
         </Row>
@@ -272,7 +272,7 @@ function ReviewVisual() {
             <span className="text-[13px] font-medium text-snow">Security Agent</span>
             <span className="ml-auto font-mono text-[10px] text-fog-2">3 files scanned</span>
           </div>
-          <p className="mt-2 text-[13px] leading-relaxed text-fog">State parameter is validated, cookies are httpOnly and secure, and no secrets are logged.</p>
+          <p className="mt-2 text-[13px] leading-relaxed text-fog">Tenant isolation is enforced, reconnect tokens are scoped, and malformed updates are rejected.</p>
           <span className="mt-3 inline-block rounded-full border border-success/30 bg-success/10 px-2 py-0.5 font-mono text-[10px] text-success">No critical issues</span>
         </Row>
       </div>
@@ -297,7 +297,7 @@ function ApproveVisual() {
         <div className="mt-5 grid grid-cols-3 gap-2">
           {[
             ["Files", "3 changed"],
-            ["Tests", "12 passed"],
+            ["Tests", "24 passed"],
             ["Security", "No critical"],
           ].map(([k, v], i) => (
             <Row key={k} delay={0.2 + i * 0.1} className="rounded-lg border border-white/[0.06] px-3 py-2">

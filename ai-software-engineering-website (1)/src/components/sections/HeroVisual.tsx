@@ -33,12 +33,12 @@ function ProjectChip() {
     <div className="glass flex h-full items-center justify-center gap-3 rounded-full px-4 font-mono text-[10.5px] tracking-wide text-fog">
       <span className="flex items-center gap-1.5 text-snow">
         <GithubIcon className="h-3.5 w-3.5" />
-        acme-edu/student-management
+        open-dev/collab-editor
       </span>
       <span className="h-3 w-px bg-white/10" />
       <span className="flex items-center gap-1.5">
         <GitBranch className="h-3 w-3" />
-        feature/google-auth
+        feat/crdt-sync
       </span>
     </div>
   );
@@ -54,8 +54,8 @@ function RunCard({ progressDelay = 1.2 }: { progressDelay?: number }) {
         </span>
         <span className="font-mono text-[10.5px] text-fog-2">#128</span>
       </div>
-      <h3 className="mt-3.5 text-[17px] font-semibold tracking-tight text-snow">Student Management System</h3>
-      <p className="mt-0.5 text-[12px] text-fog">Add Google authentication to the application</p>
+      <h3 className="mt-3.5 text-[17px] font-semibold tracking-tight text-snow">Realtime Collaborative Editor</h3>
+      <p className="mt-0.5 text-[12px] text-fog">Add conflict-free live editing to the editor</p>
 
       <div className="mt-4">
         <div className="flex items-center justify-between text-[11px]">
@@ -75,7 +75,7 @@ function RunCard({ progressDelay = 1.2 }: { progressDelay?: number }) {
       <div className="mt-4 grid grid-cols-3 gap-2">
         {[
           ["Tasks", "9 / 21"],
-          ["Tests", "12 passed"],
+          ["Tests", "24 passed"],
           ["Agents", "4 active"],
         ].map(([label, value]) => (
           <div key={label} className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-2">
@@ -109,9 +109,9 @@ function ArchitectCard() {
   return (
     <div className="flex h-full flex-col p-4">
       <AgentHeader icon={DraftingCompass} name="Architect Agent" tone="electric" />
-      <p className="mt-2 text-[11px] text-fog">Designing API</p>
+      <p className="mt-2 text-[11px] text-fog">Designing sync protocol</p>
       <div className="mt-3 flex items-center gap-1.5">
-        {["Client", "API", "Postgres"].map((node, i) => (
+        {["Client", "WebSocket", "Postgres"].map((node, i) => (
           <div key={node} className="contents">
             <span className={cn("rounded-md border px-2 py-1 font-mono text-[10px]", i === 1 ? "border-electric/40 bg-electric/10 text-electric-light" : "border-white/10 bg-white/[0.03] text-fog")}>
               {node}
@@ -121,7 +121,7 @@ function ArchitectCard() {
         ))}
       </div>
       <div className="mt-auto flex flex-wrap gap-1.5">
-        {["REST", "OAuth 2.0", "Sessions"].map((t) => (
+        {["WebSockets", "Yjs CRDT", "Presence"].map((t) => (
           <span key={t} className="rounded-full border border-white/[0.08] px-2 py-0.5 font-mono text-[9.5px] text-fog-2">
             {t}
           </span>
@@ -133,15 +133,15 @@ function ArchitectCard() {
 
 const CODE_LINES: ReactNode[] = [
   <>
-    <span className="text-electric-light">export async function</span> <span className="text-snow">signInWithGoogle</span>() {"{"}
+    <span className="text-electric-light">export function</span> <span className="text-snow">applyRemoteUpdate</span>(doc, payload) {"{"}
   </>,
   <>
     {"  "}
-    <span className="text-electric-light">const</span> state = <span className="text-snow">createState</span>()
+    <span className="text-electric-light">const</span> update = <span className="text-snow">decodeUpdate</span>(payload)
   </>,
   <>
     {"  "}
-    <span className="text-electric-light">return</span> <span className="text-snow">redirect</span>(google.url({"{"} state {"}"}))
+    <span className="text-electric-light">return</span> <span className="text-snow">applyUpdate</span>(doc, update)
   </>,
   <>{"}"}</>,
 ];
@@ -150,7 +150,7 @@ function CodeCard({ animate = true }: { animate?: boolean }) {
   return (
     <div className="flex h-full flex-col p-4">
       <AgentHeader icon={Code2} name="Code Agent" tone="electric" />
-      <p className="mt-2 text-[11px] text-fog">Implementing authentication</p>
+      <p className="mt-2 text-[11px] text-fog">Implementing CRDT sync</p>
       <div className="mt-2.5 flex-1 overflow-hidden rounded-lg border border-white/[0.06] bg-black/40 px-3 py-2.5 font-mono text-[10px] leading-[1.7] text-fog">
         {CODE_LINES.map((line, i) => (
           <motion.div
@@ -166,14 +166,14 @@ function CodeCard({ animate = true }: { animate?: boolean }) {
         ))}
       </div>
       <div className="mt-2 flex items-center justify-between font-mono text-[9.5px] text-fog-2">
-        <span>src/auth/providers/google.ts</span>
-        <span className="text-success">+68</span>
+        <span>src/ws/documents.ts</span>
+        <span className="text-success">+82</span>
       </div>
     </div>
   );
 }
 
-const TESTS = ["oauth callback exchanges code", "state mismatch is rejected", "session cookie is httpOnly"];
+const TESTS = ["concurrent edits merge deterministically", "offline updates replay on reconnect", "foreign tenant update is rejected"];
 
 function TestingCard({ animate = true }: { animate?: boolean }) {
   return (
@@ -197,7 +197,7 @@ function TestingCard({ animate = true }: { animate?: boolean }) {
         ))}
       </ul>
       <div className="mt-auto font-mono text-[9.5px] text-fog-2">
-        <span className="text-success">12 passed</span> · 0 failed · 1.8s
+        <span className="text-success">24 passed</span> · 0 failed · 1.8s
       </div>
     </div>
   );
@@ -214,7 +214,7 @@ function ReviewCard() {
           Security · no critical issues
         </li>
         <li className="flex items-center gap-2 text-fog">
-          <span className="h-1.5 w-1.5 rounded-full bg-ember" />1 suggestion · extract refresh helper
+          <span className="h-1.5 w-1.5 rounded-full bg-ember" />1 suggestion · extract reconnect backoff helper
         </li>
       </ul>
       <div className="mt-auto flex items-center gap-2">
@@ -227,8 +227,8 @@ function ReviewCard() {
 }
 
 const TASKS: { label: string; state: "done" | "active" | "pending" }[] = [
-  { label: "Design OAuth callback flow", state: "done" },
-  { label: "Implement GoogleAuthProvider", state: "active" },
+  { label: "Design CRDT sync protocol", state: "done" },
+  { label: "Implement live document sync", state: "active" },
   { label: "Write integration tests", state: "pending" },
 ];
 
