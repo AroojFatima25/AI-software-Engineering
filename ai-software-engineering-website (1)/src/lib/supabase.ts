@@ -18,6 +18,18 @@ const key = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "").trim();
 /** True when both env vars are present, so auth calls can reach Supabase. */
 export const isSupabaseConfigured = url.length > 0 && key.length > 0;
 
+// A Vercel build succeeds whether or not these vars are set, because the client
+// below degrades to `null` instead of throwing. That makes a missing env var
+// invisible in the deploy log, so say so loudly in the browser console instead —
+// opening DevTools on a deployment immediately explains why auth is inert.
+if (!isSupabaseConfigured) {
+  console.warn(
+    "[AI-OS] Supabase auth is disabled: VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY " +
+      "were empty at build time. Set both in Vercel → Settings → Environment Variables " +
+      "(Production and Preview) and redeploy.",
+  );
+}
+
 let client: SupabaseClient | null = null;
 
 /**
