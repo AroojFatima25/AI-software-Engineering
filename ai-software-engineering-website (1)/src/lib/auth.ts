@@ -39,7 +39,17 @@ function currentUrl(): string {
 }
 
 /** Prefer Supabase's own message (it explains rate limits) over a generic one. */
-function failure(error: { message?: string } | null, fallback: string): AuthResult {
+function failure(error: { name?: string; message?: string } | null, fallback: string): AuthResult {
+  // Unreachable auth server: a deleted or mistyped project URL, a DNS/egress
+  // problem, or Supabase being down. The raw message is just "Failed to fetch",
+  // which tells a visitor nothing, so keep the UI copy human and put the
+  // diagnostic detail where a developer will find it.
+  // Matched on `name` the same way supabase-js's own isAuthRetryableFetchError does.
+  if (error?.name === "AuthRetryableFetchError") {
+    console.error("[AI-OS] Could not reach the Supabase auth server:", error.message);
+    return { ok: false, message: "We can't reach the sign-in service right now. Please try again shortly." };
+  }
+
   const message = error?.message?.trim();
   return { ok: false, message: message ? message : fallback };
 }
