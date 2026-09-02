@@ -5,7 +5,6 @@ export const NAV_LINKS: NavLink[] = [
   { label: "How It Works", href: "#how-it-works" },
   { label: "AI Agents", href: "#agents" },
   { label: "Features", href: "#features" },
-  { label: "Pricing", href: "#pricing" },
   { label: "Docs", href: "#docs" },
 ];
 
@@ -15,7 +14,6 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
     links: [
       { label: "Features", href: "#features" },
       { label: "AI Agents", href: "#agents" },
-      { label: "Pricing", href: "#pricing" },
       { label: "Documentation", href: "#docs" },
     ],
   },

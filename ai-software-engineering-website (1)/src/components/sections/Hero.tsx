@@ -28,7 +28,7 @@ export function Hero() {
       <Container className="relative">
         <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
           <motion.div {...fade(0.15)}>
-            <Eyebrow>The AI Software Engineering OS</Eyebrow>
+            <Eyebrow>Open AI Software Engineering Platform</Eyebrow>
           </motion.div>
 
           <TextReveal
@@ -56,7 +56,7 @@ export function Hero() {
           </motion.div>
 
           <motion.p {...fade(1.2)} className="mt-6 font-mono text-[11px] uppercase tracking-[0.22em] text-fog-2">
-            Plan · Build · Test · Review · Ship
+            Free to use · Sign up and start building
           </motion.p>
         </div>
 

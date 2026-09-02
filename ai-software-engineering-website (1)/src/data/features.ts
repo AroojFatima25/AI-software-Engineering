@@ -16,7 +16,7 @@ import {
   Workflow,
   Layers,
 } from "lucide-react";
-import type { Feature, PricingTier, ProblemArea } from "@/types";
+import type { Feature, ProblemArea } from "@/types";
 
 export const PROBLEM_AREAS: ProblemArea[] = [
   {
@@ -183,40 +183,5 @@ export const PRODUCTIVITY_POINTS = [
     title: "Reviewed before it ships",
     description: "Every change is tested, security-checked, and summarised before it reaches you.",
     icon: UserCheck,
-  },
-];
-
-export const PRICING_TIERS: PricingTier[] = [
-  {
-    id: "developer",
-    name: "Developer",
-    price: "Free",
-    description: "For individuals exploring AI-assisted engineering on personal projects.",
-    features: ["1 workspace", "Up to 3 projects", "Core agent team", "GitHub integration", "Community support"],
-    cta: "Start Building",
-  },
-  {
-    id: "team",
-    name: "Team",
-    price: "$49",
-    period: "per seat / month",
-    description: "For engineering teams shipping production software together.",
-    features: [
-      "Unlimited projects",
-      "Full agent team incl. Security & Docs",
-      "Shared project memory",
-      "Review & approval workflows",
-      "Priority support",
-    ],
-    cta: "Start Team Trial",
-    highlighted: true,
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    price: "Custom",
-    description: "For organisations with advanced security, compliance, and scale requirements.",
-    features: ["SSO & audit logs", "Private model routing", "Self-hosted runners", "Custom agent policies", "Dedicated support"],
-    cta: "Contact Sales",
   },
 ];

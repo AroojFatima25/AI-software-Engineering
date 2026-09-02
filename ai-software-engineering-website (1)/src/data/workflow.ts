@@ -55,14 +55,14 @@ export const WORKFLOW_STEPS: WorkflowStep[] = [
   },
 ];
 
-export const RUN_REQUEST = "Add Google authentication to my application.";
+export const RUN_REQUEST = "Add real-time collaborative editing to my application.";
 
 export const RUN_STAGES: RunStage[] = [
   {
     id: "request",
     label: "User Request",
     kind: "user",
-    detail: "“Add Google authentication to my application.”",
+    detail: "“Add real-time collaborative editing to my application.”",
     icon: MessageSquareText,
   },
   {
@@ -76,28 +76,28 @@ export const RUN_STAGES: RunStage[] = [
     id: "architect",
     label: "Architect Agent",
     kind: "agent",
-    detail: "Designed the OAuth flow, callback endpoint, and session schema.",
+    detail: "Designed the WebSocket sync flow, CRDT update model, and persistence schema.",
     icon: DraftingCompass,
   },
   {
     id: "coding",
     label: "Coding Agent",
     kind: "agent",
-    detail: "Implemented GoogleAuthProvider across 3 files.",
+    detail: "Implemented the CRDT sync provider and document gateway across 3 files.",
     icon: Code2,
   },
   {
     id: "testing",
     label: "Testing Agent",
     kind: "agent",
-    detail: "Added 5 tests. 12 passed, 0 failed.",
+    detail: "Added 24 tests. 24 passed, 0 failed.",
     icon: FlaskConical,
   },
   {
     id: "security",
     label: "Security Agent",
     kind: "agent",
-    detail: "Validated state parameter and cookie flags. No critical issues.",
+    detail: "Validated tenant isolation and reconnect tokens. No critical issues.",
     icon: ShieldCheck,
   },
   {

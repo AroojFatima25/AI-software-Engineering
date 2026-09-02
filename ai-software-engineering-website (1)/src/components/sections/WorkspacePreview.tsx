@@ -64,7 +64,7 @@ export function WorkspacePreview() {
             <div className="flex h-12 items-center justify-between border-b border-white/[0.06] px-4">
               <div className="flex items-center gap-3">
                 <LogoMark className="h-6 w-6 rounded-[6px]" />
-                <span className="hidden font-mono text-[11px] text-fog-2 sm:inline">acme-edu</span>
+                <span className="hidden font-mono text-[11px] text-fog-2 sm:inline">open-dev</span>
                 <ChevronRight className="hidden h-3 w-3 text-fog-2 sm:inline" />
                 <span className="font-mono text-[11px] text-fog">{p.slug}</span>
               </div>
