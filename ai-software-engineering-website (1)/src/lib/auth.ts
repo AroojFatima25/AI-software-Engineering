@@ -19,11 +19,26 @@ export interface AuthResult {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/**
+ * Shown to visitors when the env vars are absent at build time.
+ *
+ * Deliberately free of implementation detail: naming VITE_SUPABASE_URL to a
+ * visitor is noise to them and leaks the stack to everyone else. The variable
+ * names go to the console instead, where the person who can act on them will
+ * actually see them.
+ */
 const NOT_CONFIGURED: AuthResult = {
   ok: false,
-  message:
-    "Authentication isn't configured in this build. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY, then redeploy.",
+  message: "Sign-in isn't available on this site yet. Please check back soon.",
 };
+
+/** Visitor-safe result, plus a console line naming what was attempted. */
+function unconfigured(action: string): AuthResult {
+  console.warn(
+    `[AI-OS] ${action} skipped: VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY were empty at build time.`,
+  );
+  return NOT_CONFIGURED;
+}
 
 export { isSupabaseConfigured };
 
@@ -64,9 +79,7 @@ function providerLabel(provider: OAuthProvider) {
  */
 export async function signInWithProvider(provider: OAuthProvider): Promise<AuthResult> {
   const supabase = getSupabase();
-  if (!supabase) {
-    return { ...NOT_CONFIGURED, message: `${providerLabel(provider)} sign-in is unavailable. ${NOT_CONFIGURED.message}` };
-  }
+  if (!supabase) return unconfigured(`${providerLabel(provider)} sign-in`);
 
   const { error } = await supabase.auth.signInWithOAuth({
     provider,
@@ -88,7 +101,7 @@ export async function signInWithEmail(email: string): Promise<AuthResult> {
   }
 
   const supabase = getSupabase();
-  if (!supabase) return NOT_CONFIGURED;
+  if (!supabase) return unconfigured("Email magic link");
 
   const { error } = await supabase.auth.signInWithOtp({
     email: normalized,
@@ -123,7 +136,7 @@ export function onAuthStateChange(listener: (session: Session | null) => void): 
 
 export async function signOut(): Promise<AuthResult> {
   const supabase = getSupabase();
-  if (!supabase) return NOT_CONFIGURED;
+  if (!supabase) return unconfigured("Sign out");
   const { error } = await supabase.auth.signOut();
   if (error) return failure(error, "Couldn't sign you out. Refresh the page and try again.");
   return { ok: true, message: "Signed out." };
