@@ -9,7 +9,6 @@ import { Hero } from "@/components/sections/Hero";
 import { HowItWorks } from "@/components/sections/HowItWorks";
 import { HumanInTheLoop } from "@/components/sections/HumanInTheLoop";
 import { Intelligence } from "@/components/sections/Intelligence";
-import { Pricing } from "@/components/sections/Pricing";
 import { Problem } from "@/components/sections/Problem";
 import { Productivity } from "@/components/sections/Productivity";
 import { RunExperience } from "@/components/sections/RunExperience";
@@ -43,7 +42,6 @@ export default function App() {
           <Features />
           <Intelligence />
           <Productivity />
-          <Pricing />
           <FinalCTA />
         </main>
 

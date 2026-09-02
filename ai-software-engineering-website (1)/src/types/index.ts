@@ -119,14 +119,3 @@ export interface FooterColumn {
   title: string;
   links: NavLink[];
 }
-
-export interface PricingTier {
-  id: string;
-  name: string;
-  price: string;
-  period?: string;
-  description: string;
-  features: string[];
-  cta: string;
-  highlighted?: boolean;
-}

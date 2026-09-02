@@ -20,7 +20,7 @@ export function FinalCTA() {
       <Container className="relative">
         <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
           <Reveal>
-            <Eyebrow>Get started</Eyebrow>
+            <Eyebrow>Open to everyone</Eyebrow>
           </Reveal>
           <Reveal delay={0.1}>
             <h2 className="text-gradient mt-6 text-balance text-[2.4rem] font-semibold leading-[1.04] tracking-[-0.04em] sm:text-6xl lg:text-[4.5rem]">
@@ -29,7 +29,7 @@ export function FinalCTA() {
           </Reveal>
           <Reveal delay={0.2}>
             <p className="mt-7 max-w-2xl text-pretty text-base leading-relaxed text-fog sm:text-lg">
-              From first idea to reviewed code, AI-OS brings intelligent software engineering into one workspace.
+              From first idea to reviewed code, AI-OS brings intelligent software engineering into one open workspace. Sign up and start building.
             </p>
           </Reveal>
           <Reveal delay={0.3} className="mt-10 flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row">

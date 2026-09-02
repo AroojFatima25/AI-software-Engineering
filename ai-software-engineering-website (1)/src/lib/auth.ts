@@ -15,7 +15,7 @@ export interface AuthResult {
 
 const NOT_CONFIGURED: AuthResult = {
   ok: false,
-  message: "Early access — sign-in will be enabled when your workspace is provisioned.",
+  message: "Account access is being connected. Sign up with your email to join the open platform."
 };
 
 export async function signInWithProvider(provider: OAuthProvider): Promise<AuthResult> {

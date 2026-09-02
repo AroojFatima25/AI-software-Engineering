@@ -98,10 +98,10 @@ function AuthDialog({ mode, onClose, onSwitch }: { mode: Mode; onClose: () => vo
         <div className="relative">
           <LogoMark className="h-9 w-9 rounded-[10px]" />
           <h2 id="auth-title" className="mt-5 text-xl font-semibold tracking-tight text-snow">
-            {isSignUp ? "Create your workspace" : "Sign in to AI-OS"}
+            {isSignUp ? "Create your free workspace" : "Sign in to AI-OS"}
           </h2>
           <p className="mt-1.5 text-sm text-fog">
-            {isSignUp ? "Start building with your AI engineering team." : "Welcome back. Your agents are ready."}
+            {isSignUp ? "Open to everyone. Sign up and start building." : "Welcome back. Your agents are ready."}
           </p>
 
           <div className="mt-6 grid gap-2.5">
