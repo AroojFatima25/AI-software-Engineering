@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Loader2, X } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { GithubIcon, GoogleIcon } from "@/components/ui/icons";
 import { EASE } from "@/components/ui/motion";
@@ -54,6 +55,13 @@ function AuthDialog({ mode, onClose, onSwitch }: { mode: Mode; onClose: () => vo
   const [email, setEmail] = useState("");
   const [pending, setPending] = useState<string | null>(null);
   const [result, setResult] = useState<AuthResult | null>(null);
+  const { user } = useAuth();
+
+  // A session appearing means the magic link or OAuth redirect completed —
+  // there is nothing left to sign into, so dismiss the dialog.
+  useEffect(() => {
+    if (user) onClose();
+  }, [user, onClose]);
 
   const run = async (key: string, fn: () => Promise<AuthResult>) => {
     setPending(key);
@@ -139,6 +147,9 @@ function AuthDialog({ mode, onClose, onSwitch }: { mode: Mode; onClose: () => vo
               {isSignUp ? "Continue with email" : "Send magic link"}
               <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" />
             </Button>
+            <p className="pt-0.5 text-center text-[11.5px] leading-snug text-fog-2">
+              No password — we email you a secure sign-in link.
+            </p>
           </form>
 
           <AnimatePresence mode="wait">

@@ -2,10 +2,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { EASE } from "@/components/ui/motion";
 import { Container, Logo } from "@/components/ui/primitives";
 import { NAV_LINKS } from "@/data/navigation";
+import { userInitial, userLabel } from "@/lib/auth";
 import { cn } from "@/utils/cn";
 
 function useScrolled(threshold = 24) {
@@ -44,6 +46,17 @@ export function Header() {
   const active = useActiveSection(SECTION_IDS);
   const [open, setOpen] = useState(false);
   const { open: openAuth } = useAuthModal();
+  const { user, signOut } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    try {
+      await signOut();
+    } finally {
+      setSigningOut(false);
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -93,13 +106,32 @@ export function Header() {
           </nav>
 
           <div className="hidden items-center gap-2 lg:flex">
-            <Button variant="ghost" size="sm" onClick={() => openAuth("sign-in")}>
-              Sign In
-            </Button>
-            <Button size="sm" onClick={() => openAuth("sign-up")}>
-              Get Started
-              <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover/btn:translate-x-0.5" />
-            </Button>
+            {user ? (
+              <>
+                <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] py-1 pl-1 pr-3.5">
+                  <span
+                    aria-hidden
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-electric/25 text-[12px] font-semibold text-snow"
+                  >
+                    {userInitial(user)}
+                  </span>
+                  <span className="max-w-[150px] truncate text-[13px] text-snow">{userLabel(user)}</span>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => void handleSignOut()} disabled={signingOut}>
+                  {signingOut ? "Signing out…" : "Sign Out"}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => openAuth("sign-in")}>
+                  Sign In
+                </Button>
+                <Button size="sm" onClick={() => openAuth("sign-up")}>
+                  Get Started
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover/btn:translate-x-0.5" />
+                </Button>
+              </>
+            )}
           </div>
 
           <button
@@ -147,28 +179,59 @@ export function Header() {
                 transition={{ delay: 0.4, duration: 0.4, ease: EASE }}
                 className="mt-auto grid gap-3 pb-10 pt-8"
               >
-                <Button
-                  size="lg"
-                  className="w-full"
-                  onClick={() => {
-                    setOpen(false);
-                    openAuth("sign-up");
-                  }}
-                >
-                  Get Started
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => {
-                    setOpen(false);
-                    openAuth("sign-in");
-                  }}
-                >
-                  Sign In
-                </Button>
+                {user ? (
+                  <>
+                    <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                      <span
+                        aria-hidden
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-electric/25 text-sm font-semibold text-snow"
+                      >
+                        {userInitial(user)}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium text-snow">Signed in</span>
+                        <span className="block truncate text-[13px] text-fog">{userLabel(user)}</span>
+                      </span>
+                    </div>
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      className="w-full"
+                      disabled={signingOut}
+                      onClick={() => {
+                        setOpen(false);
+                        void handleSignOut();
+                      }}
+                    >
+                      {signingOut ? "Signing out…" : "Sign Out"}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      size="lg"
+                      className="w-full"
+                      onClick={() => {
+                        setOpen(false);
+                        openAuth("sign-up");
+                      }}
+                    >
+                      Get Started
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      className="w-full"
+                      onClick={() => {
+                        setOpen(false);
+                        openAuth("sign-in");
+                      }}
+                    >
+                      Sign In
+                    </Button>
+                  </>
+                )}
               </motion.div>
             </Container>
           </motion.div>
