@@ -2,6 +2,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { EASE } from "@/components/ui/motion";
 import { signOut as supabaseSignOut } from "@/lib/auth";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -15,6 +16,9 @@ import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
  *   the site with `?code=...`; `detectSessionInUrl` exchanges it for a
  *   session, then we scrub the URL so refreshes don't re-trigger the flow.
  * - Broadcasts sign-in/sign-out through `useAuth()`.
+ * - Routes the user: completing the magic-link / OAuth round trip lands on
+ *   the protected `/workspace` dashboard; signing out (or an expired session)
+ *   from `/workspace` returns to the public landing page.
  */
 
 interface AuthContextValue {
@@ -46,11 +50,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthContextValue["session"]>(null);
   const [ready, setReady] = useState(!configured);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // True while the page was loaded directly from a magic-link redirect, so we
   // only toast "signed in" for the actual round trip, not for token refreshes.
   const completingRedirect = useRef(false);
   const signedOutOnPurpose = useRef(false);
+  const pathRef = useRef(location.pathname);
+  pathRef.current = location.pathname;
 
   useEffect(() => {
     const supabase = getSupabase();
@@ -79,6 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         completingRedirect.current = false;
         const email = nextSession?.user.email;
         setNotice({ id: Date.now(), text: email ? `Signed in as ${email}. Welcome to AI-OS.` : "Signed in. Welcome to AI-OS.", tone: "success" });
+        // The magic-link / OAuth round trip means the user's intent was to get
+        // into their workspace — drop them on the protected dashboard.
+        if (pathRef.current !== "/workspace") navigate("/workspace");
       }
       if (event === "SIGNED_OUT") {
         setNotice({
@@ -87,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           tone: signedOutOnPurpose.current ? "info" : "error",
         });
         signedOutOnPurpose.current = false;
+        if (pathRef.current === "/workspace") navigate("/", { replace: true });
       }
     });
 

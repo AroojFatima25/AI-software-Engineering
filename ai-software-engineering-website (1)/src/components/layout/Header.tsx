@@ -118,6 +118,10 @@ export function Header() {
             ) : isSignedIn ? (
               <>
                 <AccountChip email={email} />
+                <Button variant="electric" size="sm" href="/workspace">
+                  Open Workspace
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover/btn:translate-x-0.5" />
+                </Button>
                 <Button variant="ghost" size="sm" onClick={() => void signOut()}>
                   Sign Out
                 </Button>
@@ -183,6 +187,10 @@ export function Header() {
                 {ready && isSignedIn ? (
                   <>
                     <AccountChip email={email} className="w-full justify-between" />
+                    <Button size="lg" className="w-full" href="/workspace" onClick={() => setOpen(false)}>
+                      Open Workspace
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="secondary"
                       size="lg"

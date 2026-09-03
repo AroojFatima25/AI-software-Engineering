@@ -94,12 +94,18 @@ function AuthDialog({ mode, onClose, onSwitch }: { mode: Mode; onClose: () => vo
           </p>
         </div>
         <div className="mt-6 grid gap-2.5">
-          <Button className="w-full justify-center" onClick={onClose}>
-            Continue to site
+          <Button className="w-full justify-center" href="/workspace" onClick={onClose}>
+            Open your workspace
+            <ArrowRight className="h-4 w-4" />
           </Button>
-          <Button variant="secondary" className="w-full justify-center" onClick={() => void signOut()}>
-            Sign out
-          </Button>
+          <div className="grid grid-cols-2 gap-2.5">
+            <Button variant="ghost" className="w-full justify-center" onClick={onClose}>
+              Back to site
+            </Button>
+            <Button variant="secondary" className="w-full justify-center" onClick={() => void signOut()}>
+              Sign out
+            </Button>
+          </div>
         </div>
       </Shell>
     );
