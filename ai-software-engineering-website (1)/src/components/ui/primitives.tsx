@@ -91,7 +91,7 @@ export function LogoMark({ className }: { className?: string }) {
 
 export function Logo({ className, wordmarkClassName }: { className?: string; wordmarkClassName?: string }) {
   return (
-    <a href="#top" className={cn("group/logo inline-flex items-center gap-2.5", className)} aria-label="AI-OS home">
+    <a href="/" className={cn("group/logo inline-flex items-center gap-2.5", className)} aria-label="AI-OS home">
       <LogoMark />
       <span className={cn("text-[15px] font-semibold tracking-[-0.02em] text-snow", wordmarkClassName)}>AI-OS</span>
     </a>

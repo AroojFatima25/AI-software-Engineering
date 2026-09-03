@@ -133,7 +133,7 @@ export function RunExperience() {
                     </motion.p>
                     {isHuman && active ? (
                       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-4 flex gap-2">
-                        <a href="#control" className="rounded-full bg-snow px-3.5 py-1.5 text-[12px] font-medium text-ink">
+                        <a href="/how-it-works" className="rounded-full bg-snow px-3.5 py-1.5 text-[12px] font-medium text-ink">
                           Review change
                         </a>
                         <span className="rounded-full border border-white/10 px-3.5 py-1.5 text-[12px] font-medium text-fog">Request revision</span>

@@ -37,7 +37,7 @@ export function FinalCTA() {
               Start Building
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/btn:translate-x-0.5" />
             </Button>
-            <Button size="lg" variant="secondary" className="w-full sm:w-auto" href="#agents">
+            <Button size="lg" variant="secondary" className="w-full sm:w-auto" href="/agents">
               Explore AI Agents
             </Button>
           </Reveal>

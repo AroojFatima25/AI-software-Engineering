@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { Button } from "@/components/ui/Button";
@@ -20,26 +21,6 @@ function useScrolled(threshold = 24) {
   return scrolled;
 }
 
-function useActiveSection(ids: string[]) {
-  const [active, setActive] = useState<string | null>(null);
-  useEffect(() => {
-    const elements = ids.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => Boolean(el));
-    if (!elements.length) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) setActive(visible.target.id);
-      },
-      { rootMargin: "-35% 0px -55% 0px", threshold: [0, 0.2, 0.5] },
-    );
-    elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [ids]);
-  return active;
-}
-
-const SECTION_IDS = NAV_LINKS.map((l) => l.href.replace("#", ""));
-
 /** Compact signed-in indicator: live dot + account email. */
 function AccountChip({ email, className }: { email?: string; className?: string }) {
   return (
@@ -58,7 +39,7 @@ function AccountChip({ email, className }: { email?: string; className?: string 
 
 export function Header() {
   const scrolled = useScrolled();
-  const active = useActiveSection(SECTION_IDS);
+  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const { open: openAuth } = useAuthModal();
   const { ready, isSignedIn, user, signOut } = useAuth();
@@ -76,6 +57,11 @@ export function Header() {
     };
   }, [open]);
 
+  // Close mobile nav on route change
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
   return (
     <>
       <motion.header
@@ -92,11 +78,11 @@ export function Header() {
 
           <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
             {NAV_LINKS.map((link) => {
-              const isActive = active === link.href.slice(1);
+              const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));
               return (
-                <a
+                <Link
                   key={link.href}
-                  href={link.href}
+                  to={link.href}
                   className={cn(
                     "relative rounded-full px-3.5 py-2 text-[13.5px] font-medium tracking-[-0.01em] transition-colors duration-300",
                     isActive ? "text-snow" : "text-fog hover:text-snow",
@@ -106,7 +92,7 @@ export function Header() {
                     <motion.span layoutId="nav-pill" className="absolute inset-0 rounded-full bg-white/[0.06]" transition={{ type: "spring", stiffness: 380, damping: 34 }} />
                   ) : null}
                   <span className="relative">{link.label}</span>
-                </a>
+                </Link>
               );
             })}
           </nav>
@@ -164,18 +150,21 @@ export function Header() {
             <Container className="flex flex-1 flex-col">
               <nav className="mt-6 flex flex-col" aria-label="Mobile">
                 {NAV_LINKS.map((link, i) => (
-                  <motion.a
+                  <motion.div
                     key={link.href}
-                    href={link.href}
-                    onClick={() => setOpen(false)}
                     initial={{ opacity: 0, x: -12 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.05 + i * 0.05, duration: 0.4, ease: EASE }}
-                    className="flex items-center justify-between border-b border-white/[0.06] py-4 text-lg font-medium tracking-tight text-snow"
                   >
-                    {link.label}
-                    <ArrowRight className="h-4 w-4 text-fog-2" />
-                  </motion.a>
+                    <Link
+                      to={link.href}
+                      onClick={() => setOpen(false)}
+                      className="flex items-center justify-between border-b border-white/[0.06] py-4 text-lg font-medium tracking-tight text-snow"
+                    >
+                      {link.label}
+                      <ArrowRight className="h-4 w-4 text-fog-2" />
+                    </Link>
+                  </motion.div>
                 ))}
               </nav>
               <motion.div
