@@ -444,7 +444,7 @@ export function HowItWorks() {
             </Window>
             <div className="mt-4 flex items-center justify-between px-1 text-[12px] text-fog-2">
               <span>Click any stage to preview it.</span>
-              <a href="#agents" className="inline-flex items-center gap-1 text-fog transition-colors hover:text-snow">
+              <a href="/agents" className="inline-flex items-center gap-1 text-fog transition-colors hover:text-snow">
                 Meet the agents <ArrowRight className="h-3 w-3" />
               </a>
             </div>

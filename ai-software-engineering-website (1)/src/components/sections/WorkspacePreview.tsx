@@ -90,7 +90,7 @@ export function WorkspacePreview() {
                       <motion.a
                         key={label}
                         variants={item}
-                        href="#workspace"
+                        href="/workspace"
                         className={cn(
                           "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[12.5px] transition-colors",
                           active ? "bg-white/[0.06] text-snow" : "text-fog hover:bg-white/[0.03] hover:text-snow",

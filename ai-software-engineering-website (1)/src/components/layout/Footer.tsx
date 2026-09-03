@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Container, Logo, StatusDot } from "@/components/ui/primitives";
 import { FOOTER_COLUMNS } from "@/data/navigation";
 
@@ -22,9 +23,9 @@ export function Footer() {
               <ul className="mt-5 space-y-3">
                 {column.links.map((link) => (
                   <li key={link.label}>
-                    <a href={link.href} className="text-sm text-fog transition-colors duration-300 hover:text-snow">
+                    <Link to={link.href} className="text-sm text-fog transition-colors duration-300 hover:text-snow">
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>

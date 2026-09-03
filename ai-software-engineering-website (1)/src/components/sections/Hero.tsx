@@ -49,7 +49,7 @@ export function Hero() {
               Start Building
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/btn:translate-x-0.5" />
             </Button>
-            <Button size="lg" variant="secondary" className="w-full sm:w-auto" href="#how-it-works">
+            <Button size="lg" variant="secondary" className="w-full sm:w-auto" href="/how-it-works">
               <Play className="h-3.5 w-3.5 fill-current" />
               See How It Works
             </Button>

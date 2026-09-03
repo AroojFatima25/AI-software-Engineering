@@ -51,11 +51,11 @@ export function Features() {
               </div>
             </div>
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              <Button variant="secondary" href="#github">
+              <Button variant="secondary" href="/docs#github">
                 <GithubIcon className="h-4 w-4" />
                 Connect GitHub
               </Button>
-              <Button href="#docs">
+              <Button href="/docs">
                 Read the docs
                 <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/btn:translate-x-0.5" />
               </Button>
