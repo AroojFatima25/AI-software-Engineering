@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 import { AuthModalProvider } from "@/components/auth/AuthModalProvider";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
@@ -17,36 +18,38 @@ import { WorkspacePreview } from "@/components/sections/WorkspacePreview";
 
 export default function App() {
   return (
-    <AuthModalProvider>
-      <div id="top" className="relative min-h-screen bg-ink text-snow">
-        {/* Page-load transition */}
-        <motion.div
-          aria-hidden
-          className="pointer-events-none fixed inset-0 z-[90] bg-ink"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 0, transitionEnd: { display: "none" } }}
-          transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
-        />
+    <AuthProvider>
+      <AuthModalProvider>
+        <div id="top" className="relative min-h-screen bg-ink text-snow">
+          {/* Page-load transition */}
+          <motion.div
+            aria-hidden
+            className="pointer-events-none fixed inset-0 z-[90] bg-ink"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 0, transitionEnd: { display: "none" } }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+          />
 
-        <Header />
+          <Header />
 
-        <main>
-          <Hero />
-          <TrustStrip />
-          <Problem />
-          <HowItWorks />
-          <Agents />
-          <WorkspacePreview />
-          <RunExperience />
-          <HumanInTheLoop />
-          <Features />
-          <Intelligence />
-          <Productivity />
-          <FinalCTA />
-        </main>
+          <main>
+            <Hero />
+            <TrustStrip />
+            <Problem />
+            <HowItWorks />
+            <Agents />
+            <WorkspacePreview />
+            <RunExperience />
+            <HumanInTheLoop />
+            <Features />
+            <Intelligence />
+            <Productivity />
+            <FinalCTA />
+          </main>
 
-        <Footer />
-      </div>
-    </AuthModalProvider>
+          <Footer />
+        </div>
+      </AuthModalProvider>
+    </AuthProvider>
   );
 }

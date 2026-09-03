@@ -1,10 +1,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { Button } from "@/components/ui/Button";
 import { EASE } from "@/components/ui/motion";
-import { Container, Logo } from "@/components/ui/primitives";
+import { Container, Logo, StatusDot } from "@/components/ui/primitives";
 import { NAV_LINKS } from "@/data/navigation";
 import { cn } from "@/utils/cn";
 
@@ -39,11 +40,29 @@ function useActiveSection(ids: string[]) {
 
 const SECTION_IDS = NAV_LINKS.map((l) => l.href.replace("#", ""));
 
+/** Compact signed-in indicator: live dot + account email. */
+function AccountChip({ email, className }: { email?: string; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex h-9 items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.04] px-3.5 text-[13px] backdrop-blur-sm",
+        className,
+      )}
+      title={email ? `Signed in as ${email}` : "Signed in"}
+    >
+      <StatusDot tone="success" />
+      <span className="max-w-[200px] truncate font-medium text-snow">{email ?? "Signed in"}</span>
+    </span>
+  );
+}
+
 export function Header() {
   const scrolled = useScrolled();
   const active = useActiveSection(SECTION_IDS);
   const [open, setOpen] = useState(false);
   const { open: openAuth } = useAuthModal();
+  const { ready, isSignedIn, user, signOut } = useAuth();
+  const email = user?.email;
 
   useEffect(() => {
     if (!open) return;
@@ -93,13 +112,27 @@ export function Header() {
           </nav>
 
           <div className="hidden items-center gap-2 lg:flex">
-            <Button variant="ghost" size="sm" onClick={() => openAuth("sign-in")}>
-              Sign In
-            </Button>
-            <Button size="sm" onClick={() => openAuth("sign-up")}>
-              Get Started
-              <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover/btn:translate-x-0.5" />
-            </Button>
+            {!ready ? (
+              /* session restore in flight — hold the space so buttons don't flicker */
+              <span className="h-9 w-[236px]" aria-hidden />
+            ) : isSignedIn ? (
+              <>
+                <AccountChip email={email} />
+                <Button variant="ghost" size="sm" onClick={() => void signOut()}>
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => openAuth("sign-in")}>
+                  Sign In
+                </Button>
+                <Button size="sm" onClick={() => openAuth("sign-up")}>
+                  Get Started
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover/btn:translate-x-0.5" />
+                </Button>
+              </>
+            )}
           </div>
 
           <button
@@ -147,28 +180,47 @@ export function Header() {
                 transition={{ delay: 0.4, duration: 0.4, ease: EASE }}
                 className="mt-auto grid gap-3 pb-10 pt-8"
               >
-                <Button
-                  size="lg"
-                  className="w-full"
-                  onClick={() => {
-                    setOpen(false);
-                    openAuth("sign-up");
-                  }}
-                >
-                  Get Started
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => {
-                    setOpen(false);
-                    openAuth("sign-in");
-                  }}
-                >
-                  Sign In
-                </Button>
+                {ready && isSignedIn ? (
+                  <>
+                    <AccountChip email={email} className="w-full justify-between" />
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      className="w-full"
+                      onClick={() => {
+                        setOpen(false);
+                        void signOut();
+                      }}
+                    >
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      size="lg"
+                      className="w-full"
+                      onClick={() => {
+                        setOpen(false);
+                        openAuth("sign-up");
+                      }}
+                    >
+                      Get Started
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      className="w-full"
+                      onClick={() => {
+                        setOpen(false);
+                        openAuth("sign-in");
+                      }}
+                    >
+                      Sign In
+                    </Button>
+                  </>
+                )}
               </motion.div>
             </Container>
           </motion.div>

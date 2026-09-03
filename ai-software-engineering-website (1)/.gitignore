@@ -1,2 +1,7 @@
 node_modules/
 dist/
+
+# Secrets & local config — only the .env.example template may be committed.
+.env
+.env.*
+!.env.example
