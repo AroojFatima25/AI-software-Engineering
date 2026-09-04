@@ -63,3 +63,15 @@ export function authRedirectTo(): string {
   if (typeof window === "undefined") return "http://localhost:5173/";
   return `${window.location.origin}${window.location.pathname}`;
 }
+
+/**
+ * Absolute redirect URL for a specific in-app route (e.g. "/reset-password").
+ * Used by the password-recovery and sign-up confirmation emails so the user
+ * lands exactly where the flow continues. Each origin must be allow-listed in
+ * Supabase → Auth → URL Configuration → Redirect URLs.
+ */
+export function redirectToPath(path: string): string {
+  const suffix = path.startsWith("/") ? path : `/${path}`;
+  if (typeof window === "undefined") return `http://localhost:5173${suffix}`;
+  return `${window.location.origin}${suffix}`;
+}

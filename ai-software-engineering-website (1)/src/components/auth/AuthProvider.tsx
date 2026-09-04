@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { EASE } from "@/components/ui/motion";
-import { signOut as supabaseSignOut } from "@/lib/auth";
+import { describeRedirectError, signOut as supabaseSignOut } from "@/lib/auth";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 
 /**
@@ -12,13 +12,16 @@ import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
  *
  * - Restores the persisted session on load (users stay signed in across
  *   visits — supabase-js keeps it in localStorage and refreshes the token).
- * - Completes the magic-link round trip: Supabase bounces the user back to
- *   the site with `?code=...`; `detectSessionInUrl` exchanges it for a
- *   session, then we scrub the URL so refreshes don't re-trigger the flow.
+ * - Completes the magic-link / OAuth / password-recovery round trips:
+ *   Supabase bounces the user back with `?code=...` (PKCE) or a `#access_token`
+ *   fragment; `detectSessionInUrl` exchanges it for a session, then we scrub
+ *   the URL so refreshes don't re-trigger the flow.
  * - Broadcasts sign-in/sign-out through `useAuth()`.
- * - Routes the user: completing the magic-link / OAuth round trip lands on
- *   the protected `/workspace` dashboard; signing out (or an expired session)
- *   from `/workspace` returns to the public landing page.
+ * - Routes the user: completing the magic-link / OAuth / password sign-in
+ *   round trip lands on the protected `/workspace` dashboard; a recovery link
+ *   lands on `/reset-password` instead and stays there until the new password
+ *   is saved. Signing out (or an expired session) from a protected route
+ *   returns to the public landing page.
  */
 
 interface AuthContextValue {
@@ -29,6 +32,21 @@ interface AuthContextValue {
   session: Session | null;
   user: User | null;
   isSignedIn: boolean;
+  /**
+   * True while the current session came from a password-recovery link. The
+   * `/reset-password` page uses it to know the user arrived legitimately, and
+   * clears it once the new password is saved.
+   */
+  recoveryMode: boolean;
+  clearRecoveryMode: () => void;
+  /**
+   * Error copy from a failed/expired auth link (`?error=...`), consumed by the
+   * `/reset-password` page so it can explain what went wrong.
+   */
+  linkError: string | null;
+  clearLinkError: () => void;
+  /** Push a toast from anywhere in the app. */
+  notify: (text: string, tone?: "success" | "info" | "error") => void;
   signOut: () => Promise<void>;
 }
 
@@ -40,8 +58,14 @@ export function useAuth(): AuthContextValue {
   return ctx;
 }
 
-/** Query params Supabase appends when it redirects back after a magic link. */
-const REDIRECT_PARAMS = ["code", "state", "error", "error_code", "error_description"] as const;
+/** Query params Supabase appends when it redirects back after an email link. */
+const REDIRECT_PARAMS = ["code", "state", "error", "error_code", "error_description", "type", "token_hash"] as const;
+
+/** Fragment params used by the legacy (implicit) flow and by error bounces. */
+const HASH_PARAMS = ["access_token", "refresh_token", "expires_in", "expires_at", "token_type", "type", "error", "error_code", "error_description"] as const;
+
+/** Routes that require a session; signing out from one bounces to "/". */
+const PROTECTED_PATHS = ["/workspace", "/reset-password"];
 
 type Notice = { id: number; text: string; tone: "success" | "info" | "error" };
 
@@ -50,55 +74,97 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthContextValue["session"]>(null);
   const [ready, setReady] = useState(!configured);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [recoveryMode, setRecoveryMode] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // True while the page was loaded directly from a magic-link redirect, so we
-  // only toast "signed in" for the actual round trip, not for token refreshes.
+  // True while the page was loaded directly from an auth redirect, so we only
+  // toast "signed in" for the actual round trip, not for token refreshes.
   const completingRedirect = useRef(false);
   const signedOutOnPurpose = useRef(false);
   const pathRef = useRef(location.pathname);
   pathRef.current = location.pathname;
+
+  const notify = useCallback((text: string, tone: Notice["tone"] = "info") => {
+    setNotice({ id: Date.now(), text, tone });
+  }, []);
 
   useEffect(() => {
     const supabase = getSupabase();
     if (!supabase) return;
 
     const params = new URLSearchParams(window.location.search);
-    completingRedirect.current = REDIRECT_PARAMS.some((key) => params.has(key));
-    const linkFailed = params.has("error") || params.has("error_code");
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+
+    const hasQueryRedirect = REDIRECT_PARAMS.some((key) => params.has(key));
+    const hasHashRedirect = HASH_PARAMS.some((key) => hash.has(key));
+    completingRedirect.current = hasQueryRedirect || hasHashRedirect;
+
+    const errorCode = params.get("error_code") ?? hash.get("error_code") ?? params.get("error") ?? hash.get("error");
+    const errorDescription = params.get("error_description") ?? hash.get("error_description");
+    const linkFailed = Boolean(errorCode);
+
+    // Supabase marks recovery links with `type=recovery`; PKCE links only carry
+    // `?code=`, so we also treat a landing on /reset-password as recovery.
+    const linkType = params.get("type") ?? hash.get("type");
+    const arrivedForRecovery =
+      linkType === "recovery" || (window.location.pathname === "/reset-password" && completingRedirect.current);
+    if (arrivedForRecovery && !linkFailed) setRecoveryMode(true);
 
     if (completingRedirect.current) {
       REDIRECT_PARAMS.forEach((key) => params.delete(key));
       const query = params.toString();
-      window.history.replaceState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
-    }
-    if (linkFailed) {
-      completingRedirect.current = false;
-      setNotice({ id: Date.now(), text: "That sign-in link didn't work — it may have expired. Request a fresh one.", tone: "error" });
+      const keepHash = hasHashRedirect ? "" : window.location.hash;
+      window.history.replaceState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}${keepHash}`);
     }
 
-    // Fire the toast for the magic-link completion; getSession() resolves the
-    // restored (persisted) session so users stay signed in across visits.
+    if (linkFailed) {
+      completingRedirect.current = false;
+      const text = describeRedirectError(errorCode, errorDescription);
+      setLinkError(text);
+      notify(text, "error");
+    }
+
+    // getSession() resolves the restored (persisted) session so users stay
+    // signed in across visits; onAuthStateChange keeps it fresh afterwards.
     const { data: sub } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession ?? null);
       setReady(true);
+
+      if (event === "PASSWORD_RECOVERY") {
+        completingRedirect.current = false;
+        setRecoveryMode(true);
+        setLinkError(null);
+        if (pathRef.current !== "/reset-password") navigate("/reset-password", { replace: true });
+        return;
+      }
+
       if (event === "SIGNED_IN" && completingRedirect.current) {
         completingRedirect.current = false;
+        // A recovery link must land on the reset form, not the dashboard.
+        if (arrivedForRecovery || pathRef.current === "/reset-password") {
+          setRecoveryMode(true);
+          if (pathRef.current !== "/reset-password") navigate("/reset-password", { replace: true });
+          return;
+        }
         const email = nextSession?.user.email;
-        setNotice({ id: Date.now(), text: email ? `Signed in as ${email}. Welcome to AI-OS.` : "Signed in. Welcome to AI-OS.", tone: "success" });
+        notify(email ? `Signed in as ${email}. Welcome to AI-OS.` : "Signed in. Welcome to AI-OS.", "success");
         // The magic-link / OAuth round trip means the user's intent was to get
         // into their workspace — drop them on the protected dashboard.
         if (pathRef.current !== "/workspace") navigate("/workspace");
       }
+
       if (event === "SIGNED_OUT") {
-        setNotice({
-          id: Date.now(),
-          text: signedOutOnPurpose.current ? "Signed out. Your workspace will be here when you're back." : "Your session expired — sign in again to continue.",
-          tone: signedOutOnPurpose.current ? "info" : "error",
-        });
+        setRecoveryMode(false);
+        notify(
+          signedOutOnPurpose.current
+            ? "Signed out. Your workspace will be here when you're back."
+            : "Your session expired — sign in again to continue.",
+          signedOutOnPurpose.current ? "info" : "error",
+        );
         signedOutOnPurpose.current = false;
-        if (pathRef.current === "/workspace") navigate("/", { replace: true });
+        if (PROTECTED_PATHS.includes(pathRef.current)) navigate("/", { replace: true });
       }
     });
 
@@ -114,7 +180,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signedOutOnPurpose.current = true;
     await supabaseSignOut();
     setSession(null);
+    setRecoveryMode(false);
   }, []);
+
+  const clearRecoveryMode = useCallback(() => setRecoveryMode(false), []);
+  const clearLinkError = useCallback(() => setLinkError(null), []);
 
   // Auto-dismiss toasts.
   useEffect(() => {
@@ -130,9 +200,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       user: session?.user ?? null,
       isSignedIn: Boolean(session),
+      recoveryMode,
+      clearRecoveryMode,
+      linkError,
+      clearLinkError,
+      notify,
       signOut,
     }),
-    [ready, configured, session, signOut],
+    [ready, configured, session, recoveryMode, clearRecoveryMode, linkError, clearLinkError, notify, signOut],
   );
 
   return (

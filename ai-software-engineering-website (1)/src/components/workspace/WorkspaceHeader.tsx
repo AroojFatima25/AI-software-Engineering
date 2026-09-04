@@ -1,5 +1,8 @@
-import { ArrowUpRight, Loader2, LogOut, Plus, RefreshCw, Send } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
+import { ArrowUpRight, KeyRound, Loader2, LogOut, Plus, RefreshCw, Send } from "lucide-react";
+import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { PasswordSettingsDialog } from "@/components/auth/PasswordSettingsDialog";
 import { Button } from "@/components/ui/Button";
 import { LogoMark, StatusDot } from "@/components/ui/primitives";
 import { Badge } from "@/components/workspace/bits";
@@ -9,6 +12,9 @@ import { cn } from "@/utils/cn";
 
 export function WorkspaceHeader() {
   const { user, signOut } = useAuth();
+  // Lets magic-link / Google users add a password (or change an existing one)
+  // without leaving the workspace.
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const { workspace, workspaceId, memberships, selectWorkspace, profile, role, refreshing, refresh, ui, ready } = useWorkspace();
 
   const name = displayName(profile?.display_name, user?.email);
@@ -86,6 +92,14 @@ export function WorkspaceHeader() {
               {name}
             </span>
             <button
+              onClick={() => setPasswordOpen(true)}
+              title="Set or change password"
+              aria-label="Set or change password"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-full text-fog-2 transition hover:bg-white/[0.06] hover:text-snow"
+            >
+              <KeyRound className="h-3.5 w-3.5" />
+            </button>
+            <button
               onClick={() => void signOut()}
               title="Sign out"
               aria-label="Sign out"
@@ -106,6 +120,8 @@ export function WorkspaceHeader() {
           </a>
         </div>
       </div>
+
+      <AnimatePresence>{passwordOpen ? <PasswordSettingsDialog onClose={() => setPasswordOpen(false)} /> : null}</AnimatePresence>
 
       {/* Mobile-only secondary row */}
       <div className="flex items-center gap-2 border-t border-white/[0.05] px-4 py-2 md:hidden">

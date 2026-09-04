@@ -13,6 +13,7 @@ import { HowItWorksPage } from "@/pages/HowItWorksPage";
 import { LandingPage } from "@/pages/LandingPage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
 import { ProductPage } from "@/pages/ProductPage";
+import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
 import { TermsPage } from "@/pages/TermsPage";
 import { WorkspacePage } from "@/pages/WorkspacePage";
 
@@ -29,10 +30,13 @@ import { WorkspacePage } from "@/pages/WorkspacePage";
  *   "/features"      → feature grid
  *   "/docs"          → documentation overview + GitHub integration
  *   "/about" … "/terms" → company / resources / legal placeholders
- *   "/workspace"     → authenticated workspace dashboard (signed-in only)
+ *   "/workspace"      → authenticated workspace dashboard (signed-in only)
+ *   "/reset-password" → password recovery (needs the recovery session from
+ *                       the emailed link; otherwise offers a fresh link)
  *
  * Session handling lives in <AuthProvider>; the auth modal is available to
- * all marketing routes (only landing CTAs open it today).
+ * all marketing routes (only landing CTAs open it today). Email+password,
+ * magic link and Google OAuth all run through it.
  */
 export default function App() {
   return (
@@ -56,6 +60,8 @@ export default function App() {
             <Route path="/terms" element={<TermsPage />} />
             {/* Product workspace */}
             <Route path="/workspace" element={<WorkspacePage />} />
+            {/* Password recovery — reached from the reset email */}
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthModalProvider>
