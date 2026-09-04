@@ -1,18 +1,8 @@
 import { motion } from "framer-motion";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
-import { Agents } from "@/components/sections/Agents";
-import { Features } from "@/components/sections/Features";
-import { FinalCTA } from "@/components/sections/FinalCTA";
 import { Hero } from "@/components/sections/Hero";
 import { HowItWorks } from "@/components/sections/HowItWorks";
-import { HumanInTheLoop } from "@/components/sections/HumanInTheLoop";
-import { Intelligence } from "@/components/sections/Intelligence";
-import { Problem } from "@/components/sections/Problem";
-import { Productivity } from "@/components/sections/Productivity";
-import { RunExperience } from "@/components/sections/RunExperience";
-import { TrustStrip } from "@/components/sections/TrustStrip";
-import { WorkspacePreview } from "@/components/sections/WorkspacePreview";
 
 /**
  * Public marketing landing page (route "/"). Signed-out visitors live here;
@@ -34,17 +24,7 @@ export function LandingPage() {
 
       <main>
         <Hero />
-        <TrustStrip />
-        <Problem />
         <HowItWorks />
-        <Agents />
-        <WorkspacePreview />
-        <RunExperience />
-        <HumanInTheLoop />
-        <Features />
-        <Intelligence />
-        <Productivity />
-        <FinalCTA />
       </main>
 
       <Footer />
