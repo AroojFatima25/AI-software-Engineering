@@ -1,0 +1,31 @@
+{
+  "$schema": "https://deno.land/x/deno/cli/schemas/config.v1.json",
+  "compilerOptions": {
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "lib": ["deno.window", "esnext", "dom"]
+  },
+  "tasks": {
+    "check": "deno check index.ts",
+    "check:all": "deno check index.ts lib/*.ts",
+    "fmt": "deno fmt --check",
+    "fmt:fix": "deno fmt",
+    "lint": "deno lint",
+    "serve": "deno serve --allow-net --allow-env --allow-read index.ts"
+  },
+  "fmt": {
+    "lineWidth": 110,
+    "singleQuote": false,
+    "semiColons": true
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"],
+      "exclude": ["no-explicit-any"]
+    }
+  },
+  "nodeModulesDir": "none"
+}

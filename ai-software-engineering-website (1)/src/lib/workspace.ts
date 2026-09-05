@@ -44,6 +44,8 @@ import { slugify } from "@/lib/format";
 export interface MutationResult {
   ok: boolean;
   message: string;
+  /** Set by `createRun` so the caller can hand the new run to the agent runner. */
+  runId?: string;
 }
 
 type AnyClient = SupabaseClient;
@@ -425,7 +427,8 @@ export async function createRun(
     .maybeSingle();
 
   if (error) return { ok: false, message: friendly(error, "Couldn't submit the request.") };
-  return { ok: true, message: data?.id ? "Request submitted — your agents are on it." : "Request submitted." };
+  if (!data?.id) return { ok: true, message: "Request submitted." };
+  return { ok: true, runId: data.id, message: "Request submitted — your agents are on it." };
 }
 
 /** Human review decision; goes through the `submit_approval` RPC. */
