@@ -1,0 +1,24 @@
+# Supabase CLI configuration for this repository.
+#
+# Only what the hosted deployment of `agent-runner` needs is declared here; the
+# CLI falls back to its defaults for everything else (local `supabase start`,
+# auth, storage, ...). Reference: https://supabase.com/docs/guides/local-development/cli/config
+#
+# `project_id` is the *local* project name (docker container prefix). The
+# hosted project is selected at deploy time with `--project-ref` — see
+# `.github/workflows/deploy-agent-runner.yml` and README §8.
+project_id = "ai-software-engineering"
+
+[functions.agent-runner]
+enabled = true
+entrypoint = "./functions/agent-runner/index.ts"
+# The gateway must NOT reject requests that carry no Supabase JWT, because:
+#   * `GET /health` is intentionally unauthenticated (uptime probes, and the
+#     post-deploy verification in CI);
+#   * the server-to-server `drain` / `recover_stale` actions authenticate with
+#     `X-Agent-Runner-Worker` and carry no user JWT (see the pg_cron example in
+#     README §8).
+# User-facing `run` requests are still fully authenticated: the function
+# verifies the caller's JWT with `auth.getUser()` and proves workspace
+# membership under RLS before it does anything (lib/auth.ts).
+verify_jwt = false
