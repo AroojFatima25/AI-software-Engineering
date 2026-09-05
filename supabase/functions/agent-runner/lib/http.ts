@@ -74,7 +74,10 @@ export function corsHeaders(request: Request, allowedOrigins: string[]): Headers
 }
 
 export function preflightResponse(headers: HeadersInit): Response {
-  return new Response("ok", { status: 204, headers });
+  // A 204 must not carry a body — the Fetch spec (and therefore Deno and the
+  // Supabase Edge Runtime) throws `Response with null body status cannot have
+  // body` otherwise, which would turn every CORS preflight into a 500.
+  return new Response(null, { status: 204, headers });
 }
 
 /* ------------------------------------------------------------------ */
