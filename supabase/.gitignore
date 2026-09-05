@@ -1,0 +1,10 @@
+# Supabase Edge Functions ignore rules
+#
+# Real secret values must never be committed — only `secrets.example` is
+# tracked. `.temp` and `.branches` are Supabase CLI scratch directories.
+secrets
+secrets.local
+.env
+.env.*
+.temp/
+.branches/

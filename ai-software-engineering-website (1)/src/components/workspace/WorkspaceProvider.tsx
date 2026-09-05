@@ -4,6 +4,7 @@ import { NewProjectDialog } from "@/components/workspace/NewProjectDialog";
 import { NewRequestDialog } from "@/components/workspace/NewRequestDialog";
 import { WorkspaceContext, type ReviewInput, type WorkspaceNotice } from "@/hooks/useWorkspace";
 import { getSupabase } from "@/lib/supabase";
+import { startAgentRun } from "@/lib/agentRunner";
 import {
   createProject as apiCreateProject,
   createRun as apiCreateRun,
@@ -245,6 +246,15 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         pushNotice("success", result.message);
         if (workspaceIdRef.current) {
           void loadRef.current(workspaceIdRef.current, { silent: hasSnapshotRef.current }, membershipsRef.current);
+        }
+        // Hand the freshly queued run to the agent-runner Edge Function using
+        // the signed-in user's own JWT. It answers as soon as the run is
+        // claimed; the pipeline keeps running server-side and the poll above
+        // surfaces stage progress. No secret leaves the server for this.
+        if (result.runId) {
+          void startAgentRun(result.runId).then((trigger) => {
+            if (!trigger.ok) pushNotice("info", trigger.message);
+          });
         }
       }
       return result;
