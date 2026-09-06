@@ -361,19 +361,47 @@ Server-to-server. Stale-run recovery only, no processing.
 
 ## 8. Deploying
 
+Production project ref: **`dvspibrxsqyfdtryqogc`**
+Function URL: `https://dvspibrxsqyfdtryqogc.supabase.co/functions/v1/agent-runner`
+
+### 8.1 From GitHub Actions (recommended)
+
+`.github/workflows/deploy-agent-runner.yml` deploys **only** this function —
+it never runs `db push` and never touches the frontend. It:
+
+1. typechecks, lints, tests and smoke-tests the function (`checks` job);
+2. runs `supabase functions deploy agent-runner --project-ref … --use-api`
+   (server-side bundling, no Docker);
+3. lists the configured secret **names** (never values);
+4. verifies `GET /health` with `supabase/scripts/verify-health.sh`, which fails
+   the run if any of the four required secrets is reported absent;
+5. prints the function URL.
+
+One-time setup: add the repository secret `SUPABASE_ACCESS_TOKEN` (a personal
+access token from https://supabase.com/dashboard/account/tokens) under
+*Settings → Secrets and variables → Actions*. Then run the workflow from the
+*Actions* tab (**Deploy agent-runner → Run workflow**), or push a change under
+`supabase/functions/agent-runner/` to `main`.
+
+### 8.2 From a workstation
+
 ```bash
 supabase login
-supabase link --project-ref YOUR-PROJECT-REF
 
 # 1. Secrets BEFORE the first deploy, so the function never starts misconfigured
-supabase secrets set --env-file ./secrets.local
+supabase secrets set --env-file ./secrets.local --project-ref dvspibrxsqyfdtryqogc
 
-# 2. Deploy
-supabase functions deploy agent-runner
+# 2. Deploy (verify_jwt / entrypoint come from supabase/config.toml)
+supabase functions deploy agent-runner --project-ref dvspibrxsqyfdtryqogc --use-api
 
-# 3. Smoke test
-curl https://YOUR-PROJECT-REF.supabase.co/functions/v1/agent-runner/health
+# 3. Verify — presence booleans only, never values
+./supabase/scripts/verify-health.sh dvspibrxsqyfdtryqogc
 ```
+
+`supabase/config.toml` sets `verify_jwt = false` for this function on purpose:
+`GET /health` and the token-authenticated worker actions carry no Supabase JWT,
+and the function performs its own — stricter — verification of user JWTs
+(`lib/auth.ts`) before doing anything.
 
 Add the browser origins that will call the function to
 `AGENT_RUNNER_ALLOWED_ORIGINS`, and add the function URL to Supabase → Edge

@@ -1,0 +1,143 @@
+# Deploys ONLY the `agent-runner` Supabase Edge Function.
+#
+# Scope, deliberately narrow:
+#   * no `supabase db push`  — the database schema is never touched;
+#   * no frontend build/deploy — the Vite app is untouched;
+#   * no `supabase secrets set` — secrets are managed out-of-band in the
+#     Supabase dashboard / CLI and are only ever reported as present/absent.
+#
+# One-time setup (repository → Settings → Secrets and variables → Actions):
+#   secret  SUPABASE_ACCESS_TOKEN   personal access token from
+#                                   https://supabase.com/dashboard/account/tokens
+#                                   (used by the CLI to call the Management API)
+#
+# The project ref is not secret; it is pinned below and can be overridden when
+# the workflow is dispatched manually.
+name: Deploy agent-runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_ref:
+        description: "Supabase project ref to deploy to"
+        required: true
+        default: dvspibrxsqyfdtryqogc
+  push:
+    branches: [main]
+    paths:
+      - "supabase/functions/agent-runner/**"
+      - "supabase/config.toml"
+      - "supabase/scripts/verify-health.sh"
+      - ".github/workflows/deploy-agent-runner.yml"
+
+concurrency:
+  group: deploy-agent-runner-${{ github.event.inputs.project_ref || 'dvspibrxsqyfdtryqogc' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  PROJECT_REF: ${{ github.event.inputs.project_ref || 'dvspibrxsqyfdtryqogc' }}
+  FUNCTION_NAME: agent-runner
+
+jobs:
+  checks:
+    name: Function checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: supabase/functions/agent-runner
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Typecheck (strict)
+        run: deno check index.ts lib/*.ts
+
+      - name: Lint
+        run: deno lint
+
+      # Formatting is reported but not enforced: the tree pre-dates a
+      # `deno fmt` pass and reformatting 12 files is out of scope for a deploy.
+      - name: Format (advisory)
+        run: deno fmt --check || echo "::warning::deno fmt --check reported unformatted files (advisory only)"
+
+      - name: Tests
+        working-directory: ${{ github.workspace }}
+        run: deno test --config supabase/functions/agent-runner/deno.json --allow-net --allow-env --allow-read supabase/tests/
+
+      - name: Smoke-test the entry point locally (no secrets involved)
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          # 1) With NO configuration the function must answer a structured 500
+          #    that names the missing variable, not crash on cold start.
+          env -i PATH="$PATH" HOME="$HOME" deno run --allow-net --allow-env --allow-read \
+            supabase/functions/agent-runner/index.ts >/tmp/serve.log 2>&1 &
+          pid=$!
+          for _ in $(seq 1 20); do curl -sf -o /dev/null http://127.0.0.1:8000/health && break || sleep 0.5; done || true
+          out="$(curl -s -w '\n%{http_code}' http://127.0.0.1:8000/health)"
+          kill "$pid" || true
+          echo "$out"
+          [ "${out##*$'\n'}" = "500" ] && echo "$out" | grep -q '"misconfigured"' \
+            || { echo "::error::expected a structured 500 'misconfigured' response"; exit 1; }
+
+          # 2) With placeholder (non-secret) configuration the routes must behave.
+          env -i PATH="$PATH" HOME="$HOME" \
+            SUPABASE_URL="http://placeholder.local" SUPABASE_ANON_KEY="placeholder" \
+            SUPABASE_SERVICE_ROLE_KEY="placeholder" OPENROUTER_API_KEY="placeholder" \
+            deno run --allow-net --allow-env --allow-read \
+            supabase/functions/agent-runner/index.ts >/tmp/serve.log 2>&1 &
+          pid=$!
+          for _ in $(seq 1 20); do curl -sf -o /dev/null http://127.0.0.1:8000/health && break || sleep 0.5; done
+          expect() { local want="$1"; shift; local got; got="$(curl -s -o /dev/null -w '%{http_code}' "$@")"; echo "  $want == $got  ($*)"; [ "$got" = "$want" ]; }
+          expect 200 http://127.0.0.1:8000/health
+          expect 200 http://127.0.0.1:8000/agent-runner/health
+          expect 405 http://127.0.0.1:8000/
+          expect 204 -X OPTIONS -H 'Origin: https://example.com' http://127.0.0.1:8000/
+          expect 403 -X POST -H 'Content-Type: application/json' -d '{"action":"drain"}' http://127.0.0.1:8000/
+          expect 401 -X POST -H 'Content-Type: application/json' -d '{"action":"run","run_id":"00000000-0000-4000-8000-000000000000"}' http://127.0.0.1:8000/
+          kill "$pid" || true
+          ! grep -q placeholder /tmp/serve.log || { echo "::error::a secret value leaked into the function log"; exit 1; }
+
+  deploy:
+    name: Deploy to Supabase
+    needs: checks
+    runs-on: ubuntu-latest
+    environment: supabase-production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy agent-runner (server-side bundling, no Docker)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_ACCESS_TOKEN}" ]; then
+            echo "::error::Repository secret SUPABASE_ACCESS_TOKEN is not set. Create a token at https://supabase.com/dashboard/account/tokens and add it under Settings → Secrets → Actions."
+            exit 1
+          fi
+          supabase functions deploy "${FUNCTION_NAME}" --project-ref "${PROJECT_REF}" --use-api
+
+      - name: Secrets configured on the project (names only)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          # `supabase secrets list` prints names + digests, never values.
+          supabase secrets list --project-ref "${PROJECT_REF}" | awk 'NR<=2 || /^[[:space:]]*(SUPABASE_|OPENROUTER_|AGENT_RUNNER_)/ {print $1}'
+
+      - name: Verify deployed health endpoint
+        run: ./supabase/scripts/verify-health.sh "${PROJECT_REF}"
+
+      - name: Function URL
+        run: |
+          echo "agent-runner is live at: https://${PROJECT_REF}.supabase.co/functions/v1/${FUNCTION_NAME}"
+          echo "health:                  https://${PROJECT_REF}.supabase.co/functions/v1/${FUNCTION_NAME}/health"
