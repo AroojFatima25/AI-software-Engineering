@@ -74,6 +74,7 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           supabase functions deploy agent-runner \
+            --no-verify-jwt \
             --project-ref "$SUPABASE_PROJECT_REF" \
             --workdir .
 
